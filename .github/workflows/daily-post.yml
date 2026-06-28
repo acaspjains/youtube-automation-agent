@@ -1,0 +1,67 @@
+name: RozKiKahani Daily Auto Post
+
+on:
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  post-daily-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg python3-pip fonts-dejavu-core
+          pip3 install Pillow gtts --break-system-packages -q
+
+      - name: Install Node deps
+        run: npm install
+
+      - name: Setup environment
+        run: |
+          cp env.example .env
+          sed -i "s|your-gemini-api-key-here|${{ secrets.GEMINI_API_KEY }}|g" .env
+          sed -i "s|your-youtube-data-api-key-here|${{ secrets.YOUTUBE_API_KEY }}|g" .env
+          sed -i "s|generate-a-random-secret-here|${{ secrets.JWT_SECRET }}|g" .env
+          mkdir -p config data/scripts data/audio data/videos data/thumbnails
+
+      - name: Setup credentials
+        run: |
+          mkdir -p config
+          printf '{"youtube":{"client_id":"%s","client_secret":"%s","redirect_uris":["http://localhost:3456/auth/callback"]}}' "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" > config/credentials.json
+          printf '%s' "$YOUTUBE_OAUTH_TOKEN" > config/tokens.json
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          YOUTUBE_OAUTH_TOKEN: ${{ secrets.YOUTUBE_OAUTH_TOKEN }}
+
+      - name: Run full pipeline
+        run: node run-now.js
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          YOUTUBE_OAUTH_TOKEN: ${{ secrets.YOUTUBE_OAUTH_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          CHANNEL_NAME: RozKiKahani
+          LANGUAGE: Hinglish
+          NICHE: daily life stories - money career family emotions dreams
+          TAGLINE: Yeh meri bhi kahani hai
+          YOUTUBE_REGION: IN
+          DEFAULT_PRIVACY_STATUS: public
+          NODE_ENV: production
