@@ -25,7 +25,7 @@ class VideoAssemblyAgent {
     const tempDir = path.join(__dirname,'..','data','temp_'+Date.now());
     fs.mkdirSync(tempDir,{recursive:true});
     try {
-      let audioDuration = 120;
+      let audioDuration = 300; // minimum 5 minutes
       if(fs.existsSync(audioPath)&&fs.statSync(audioPath).size>1000){
         try{ audioDuration=parseFloat(execSync(`ffprobe -v quiet -show_entries format=duration -of csv=p=0 "${audioPath}" 2>/dev/null`).toString().trim())||120; }catch(e){}
       }

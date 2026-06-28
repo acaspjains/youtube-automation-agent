@@ -23,7 +23,7 @@ class VoiceAgent {
     }
     try{
       const escaped=clean.slice(0,800).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,' ');
-      const py=`from gtts import gTTS\ntts=gTTS(text="""${escaped}""",lang='hi',slow=False)\ntts.save('${outputPath}')\nprint('OK')`;
+      const py=`from gtts import gTTS\ntts=gTTS(text="""${escaped}""",lang='hi',slow=True)\ntts.save('${outputPath}')\nprint('OK')`;
       fs.writeFileSync('/tmp/tts.py',py);
       execSync('python3 /tmp/tts.py 2>&1',{timeout:60000});
       if(fs.existsSync(outputPath)&&fs.statSync(outputPath).size>1000){
